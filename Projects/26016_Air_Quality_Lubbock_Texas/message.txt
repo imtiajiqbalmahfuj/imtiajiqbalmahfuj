@@ -1,0 +1,693 @@
+Some more setails are down below:
+
+
+
+I. Research Framing: Methodology, Gap Analysis & Novelty
+
+Background & Problem Statement
+
+Semi-arid urban-agricultural interfaces, such as Lubbock, Texas, present highly complex atmospheric environments. Situated downwind of the Permian Basin (a major petroleum hub) and surrounded by intensive cotton agriculture and feedlots, the region is subjected to fugitive greenhouse gas emissions ($\text{CH}_4$), criteria combustion pollutants ($\text{NO}_2, \text{CO}$), and severe wind-driven dust resuspension (represented by Aerosol Optical Depth and $\text{UVAI}$). Traditional ground-based air quality monitoring relies on sparse point data, which fails to capture the spatial non-stationarity of these pollutants or their complex non-linear interactions with localized thermal drivers like the Surface Urban Heat Island (SUHI) effect.
+
+Literature Review & Research Gap
+
+Recent advancements in cloud-based Earth observation have significantly improved spatial pollution tracking. Sameh et al. (2026) utilized Sentinel-5P to map trace gases and evaluated their correlation with Land Surface Temperature (LST) via Geographically Weighted Regression (GWR) in Egypt. Rahman et al. (2025) applied Mann-Kendall trend testing to monitor intra-annual pollution dynamics in Dhaka. Alvarez et al. (2025) introduced machine learning and Shapley Additive Explanations (SHAP) to predict urban air quality using satellite embeddings.
+
+The Critical Gap: Previous studies evaluate pollutants in isolation or rely on global regression models that fail to explain why specific chemical and thermal interactions occur locally. Furthermore, black-box machine learning algorithms forecast pollution accurately but lack physical interpretability, leaving policymakers without actionable emission-source attribution.
+
+Research Novelty & Objectives
+
+This study bridges these gaps by synthesizing a multi-sensor satellite array (Sentinel-5P, MODIS, ERA5-Land) into a single analytical pipeline. The objectives are:
+
+To generate continuous high-resolution spatiotemporal distributions (daily and monthly) for 12 critical atmospheric and thermal parameters.
+
+To evaluate spatial non-stationarity using GWR, transitioning from traditional point-based metrics to continuous interpolated local $R^2$ zonal surfaces.
+
+To deploy a Performance-Weighted Machine Learning Ensemble integrated with Explainable AI (SHAP) to predict $\text{PM}_{2.5}$ hotspots and attribute the exact physical drivers (thermal vs. synoptic) governing local air quality.
+
+Clarification: ML Ensemble vs. SHAP (The "Why" and "What")
+
+Machine Learning Ensemble (The "What"): Algorithms like Random Forest and Gradient Boosting are used to predict particulate matter concentrations with high accuracy because they capture complex, non-linear environmental interactions (e.g., how temperature, pressure, and $\text{NO}_2$ simultaneously trap dust). The ensemble fuses these models to maximize predictive accuracy and reduce error (RMSE).
+
+SHAP (The "Why"): While the ML Ensemble predicts the pollution level, it operates as a "black box." SHAP (Shapley Additive Explanations) deconstructs this black box based on cooperative game theory. It calculates the exact mathematical contribution of each variable to a specific prediction (Alvarez et al., 2025). SHAP tells us why the model made its prediction—explicitly revealing whether a local pollution spike was driven by extreme heat ($\text{LST}$), stagnant weather (Surface Pressure), or combustion emissions ($\text{NO}_2$).
+
+Together: The ML Ensemble defines the Hotspot Map, and SHAP provides the scientific justification for what causes the hotspot, allowing for targeted regulatory policy.
+
+II. The Unified GeoAI Python Pipeline
+
+This script executes the entire workflow. It extracts daily and monthly data, applies the requested matplotlib IEEE styling, generates the continuous GWR zonal surfaces, trains the ML models, plots the SHAP attributions, and automatically exports over 150+ maps and Excel datasets.
+
+
+
+1-Line Explanation
+
+The research constructs a continuous, cloud-native geospatial pipeline to evaluate the spatial non-stationarity and machine-learning-driven physical drivers of multi-pollutant and thermal anomalies across Lubbock, Texas.
+
+Methodological & SHAP Explanation (Based on Alvarez et al., 2025)
+
+Why SHAP?
+
+Machine learning models (such as Random Forest or Gradient Boosting) are highly effective at capturing non-linear relationships in environmental data, but they operate as "black boxes." You know what the model predicted, but not why it predicted it.
+
+Shapley Additive Explanations (SHAP), derived from cooperative game theory, resolves this by calculating the exact marginal contribution of each feature to a specific prediction (Alvarez et al., 2025). In this research, SHAP tells us precisely how much localized thermal anomalies (LST), synoptic weather (Pressure, Temperature), or trace gases ($\text{NO}_2, \text{CO}$) influence the accumulation of $\text{PM}_{2.5}$ at any given location. Rather than relying on simple correlations, SHAP isolates causality within complex, multi-variable environments, providing policy-makers with empirical evidence on which environmental drivers actually dictate localized pollution spikes.
+
+Methodological Execution
+
+Cloud-Native Data Fusion: We bypass traditional download limits by utilizing Google Earth Engine (GEE) to aggregate daily and monthly composites for 12 distinct atmospheric and thermal variables over Lubbock, Texas.
+
+Temporal Trend Analytics: We generate both high-frequency daily trajectories and smoothed monthly trajectories, applying linear regressions to detect monotonic shifts across the calendar year (Rahman et al., 2025).
+
+Spatial Non-Stationarity (GWR): Standard regressions assume relationships are uniform everywhere. We apply Geographically Weighted Regression (GWR) and spatial interpolation to map how the statistical relationship between LST and pollutants physically changes across rural versus urban zones (Sameh et al., 2026).
+
+Explainable GeoAI Modeling: We train multiple algorithms (Random Forest, SVR, Gradient Boosting) on the spatial pixels to predict localized pollution patterns. TreeSHAP is then applied to the champion model to deconstruct feature importance (Alvarez et al., 2025).
+
+
+
+
+
+I. Research Proposal & Methodological Framework
+
+ChecklistBrief ExplanationsResearch TitleSpatiotemporal Characterization and Non-Stationary Modeling of Air Pollutant Interactions and Surface Thermal Dynamics over Lubbock, TexasProblem Statement and Research QuestionsRapid industrial expansion, agricultural intensification, and fossil fuel extraction significantly alter land surface temperatures and degrade ambient air quality across semi-arid environments (Sameh et al., 2026; Rahman et al., 2025). Lubbock, Texas ($33.5779^\circ\text{ N}, 101.8552^\circ\text{ W}$) operates as a critical agro-industrial hub situated immediately downwind of the Permian Basin—the highest-producing petroleum region in the United States (Zhang et al., 2020). The region experiences severe atmospheric stress from episodic dust storms, agricultural particulate emissions, fugitive methane plumes, and surface urban heat islands (Lyles et al., 2021). Conventional air quality monitoring relies on sparse ground networks that fail to record the spatial gradients of primary criteria pollutants and secondary trace gases across the urban-agricultural boundary. Consequently, the mechanistic coupling between thermal anomalies and multi-pollutant accumulation remains poorly constrained. This investigation asks:
+
+
+
+1. How do synoptic meteorological parameters and surface urban heat islands dictate the spatiotemporal distribution and monotonic trends of tropospheric trace gases across Lubbock?
+
+
+
+2. To what degree do geographic non-stationarity and local spatial autocorrelation govern the interaction between land surface temperature and distinct chemical pollutants?
+
+Literature Review and Research GapSatellite remote sensing and cloud-based platforms provide continuous spaceborne retrievals of trace gases and land surface characteristics (Veefkind et al., 2012; Gorelick et al., 2017). Sameh et al. (2026) evaluated interactions between land surface temperature (LST) and air pollutants in Egypt, reporting strong positive correlations between thermal stress and methane ($r = 0.8589$). Rahman et al. (2025) utilized a 60-month Sentinel-5P time-series over Dhaka, Bangladesh, applying Mann-Kendall trend tests to demonstrate significant seasonal variations in criteria pollutants. Alvarez et al. (2025) integrated multi-sensor satellite arrays to map urban trace gases at high spatial resolutions.
+
+
+
+
+
+Despite these advances, critical vulnerabilities persist:
+
+
+
+1. Previous investigations examine trace gases in isolation, failing to evaluate the simultaneous spatial coupling between criteria pollutants ($\text{NO}_2, \text{SO}_2, \text{O}_3$), greenhouse gases ($\text{CH}_4$), and particulate proxies across semi-arid environments (Sameh et al., 2026; Rahman et al., 2025).
+
+
+
+2. Global Ordinary Least Squares (OLS) models dominate spatial air quality assessments, overriding the geographic non-stationarity of climatic relationships across diverse rural-urban land covers (Wang et al., 2021; Fotheringham et al., 2002).
+
+
+
+This study explicitly resolves these limitations by executing an integrated geospatial pipeline combining Mann-Kendall temporal analytics with Geographically Weighted Regression (GWR) to map local environmental interactions without relying on external predictive forecasting models.
+
+Research Goals and ObjectivesThe core aim of this research is to establish a reproducible, cloud-based analytical architecture that quantifies multi-pollutant distributions, detects intra-annual monotonic trends, and maps the spatial non-stationarity of air quality drivers in Lubbock, Texas.
+
+
+
+• Objective 1: To map the 12-month spatiotemporal distribution and dual-diurnal thermal regimes of atmospheric constituents ($\text{CH}_4, \text{NO}_2, \text{SO}_2, \text{O}_3, \text{PM}_{2.5}$) utilizing Sentinel-5P and MODIS datasets.
+
+
+
+• Objective 2: To identify statistically significant intra-annual pollution trend trajectories using the non-parametric Mann-Kendall test.
+
+
+
+• Objective 3: To evaluate the spatial non-stationarity and factor clustering between land surface temperature and trace gases through Principal Component Analysis (PCA) and Geographically Weighted Regression (GWR).
+
+Methodology and Methods1. Cloud-Based Data Processing in Google Earth Engine:
+
+
+
+• Atmospheric constituents ($\text{CH}_4, \text{NO}_2, \text{SO}_2, \text{HCHO}, \text{O}_3, \text{UVAI}, \text{CO}$) are retrieved from Sentinel-5P L3 Offline products with quality assurance filtering ($\text{QA} > 0.75$) (Veefkind et al., 2012; Rahman et al., 2025).
+
+
+
+• Land Surface Temperature ($\text{LST}$) is extracted from MODIS MOD11A1 (1 km resolution) and converted to Celsius. Surface Urban Heat Island (SUHI) intensity is calculated as pixel departures from the rural baseline (Wan et al., 2015; Sameh et al., 2026).
+
+
+
+• Particulate matter ($\text{PM}_{2.5}$) is empirically modeled from MODIS MAIAC Aerosol Optical Depth (MCD19A2) (Sameh et al., 2026).
+
+
+
+• Synoptic meteorological variables are extracted from ECMWF ERA5-Land reanalysis.
+
+
+
+
+
+2. Statistical and Spatial Analytical Engine:
+
+
+
+• Trend Trajectory: Non-parametric Mann-Kendall tests evaluate monthly monotonic trend significance ($\alpha = 0.05$) across the calendar year (Kendall, 1975; Rahman et al., 2025).
+
+
+
+• Multivariate Factor Apportionment: Variance Inflation Factor (VIF) identifies collinearity, followed by PCA eigenvalue-eigenvector decomposition to isolate dominant thermal and particulate components (Jolliffe, 2002).
+
+
+
+• Spatial Non-Stationarity: Geographically Weighted Regression (GWR) with an adaptive Gaussian kernel estimates spatially varying parameter surfaces and local coefficient of determination ($R^2$) maps across Lubbock County (Fotheringham et al., 2002; Sameh et al., 2026).
+
+Expected Outcomes• High-resolution, multi-panel spatial maps (rendered via matplotlib and interactive geemap) depicting the 12-month evolution of trace gases and thermal regimes.
+
+
+
+• Quantitative identification of intra-annual pollution trends via Kendall's Tau metrics, isolating specific seasonal transition anomalies.
+
+
+
+• Spatially continuous GWR surfaces demonstrating the geographic variation of local explanatory power ($R^2$) between land surface temperature and air pollutants.
+
+
+
+• Four fully compiled Excel workbooks capturing the monthly data aggregations, trend statistics, PCA matrices, and GWR parameter outputs for direct policy assessment.
+
+Potential Data Sources• Sentinel-5P TROPOMI: COPERNICUS/S5P/OFFL/L3_* (European Space Agency).
+
+
+
+• MODIS Terra/Aqua: MODIS/061/MOD11A1 (LST), MODIS/061/MCD19A2_GRANULES (AOD).
+
+
+
+• ECMWF ERA5-Land: ECMWF/ERA5_LAND/MONTHLY_AGGR (Meteorology).
+
+
+
+• US Census Bureau TIGER: TIGER/2018/Counties (Administrative boundaries).
+
+II. End-to-End Geospatial Python Pipeline (Jupyter Lab)
+
+This script translates the theoretical methodology into a rigorous Earth Engine Python API workflow. It extracts the raw satellite arrays, processes them analytically, provides geemap interactive visualizers, renders IEEE-standard matplotlib grids (generating 15+ maps), and exports the data to Excel at each stage.
+
+
+
+
+
+The Research Framework: Spatiotemporal Dynamics and Explainable Predictive Modeling
+
+Background and Context
+
+Rapid urbanization, agricultural intensification, and fossil fuel extraction significantly alter land surface temperatures (LST) and degrade ambient air quality across semi-arid environments (Sameh et al., 2026; Rahman et al., 2025). The interactions between anthropogenic emissions and microclimatic parameters create severe localized pollution hotspots. In semi-arid regions, these atmospheric interactions are complicated by persistent dust resuspension, planetary boundary layer inversions, and high thermal forcing from impervious urban surfaces.
+
+The Problem Statement
+
+Air quality management in transitionary urban-agricultural regions suffers from severe observational deficits. Ground-based monitoring networks are extremely sparse and fail to capture the high-resolution spatial gradients of primary criteria pollutants and secondary trace gases. Furthermore, the mechanistic coupling between thermal anomalies (such as the Surface Urban Heat Island effect) and multi-pollutant accumulation remains poorly constrained across seasonal cycles, limiting the effectiveness of municipal mitigation policies (Alvarez et al., 2025; Sameh et al., 2026).
+
+The Research Gap
+
+Current environmental studies exhibit three critical vulnerabilities. First, research typically isolates a single pollutant dimension (e.g., exclusively particulate matter or greenhouse gases), ignoring the simultaneous chemical interplay among $\text{CH}_4, \text{NO}_2, \text{SO}_2, \text{O}_3$, and $\text{HCHO}$. Second, standard regression frameworks apply global assumptions to spatial data, disregarding the geographic non-stationarity of climatic relationships across diverse rural-urban land covers. Third, advanced predictive models often deploy machine learning as an opaque "black-box," successfully forecasting pollution levels but failing to explain the underlying physical drivers or meteorological thresholds responsible for those predictions.
+
+The Novelty
+
+This study resolves these limitations by engineering a comprehensive, cloud-native GeoAI pipeline. It fuses non-parametric temporal analysis (Mann-Kendall), local spatial statistics (Geographically Weighted Regression), and an explainable machine learning ensemble (SHAP) across a seven-pollutant spectrum. This approach translates massive multi-sensor satellite arrays into decipherable, policy-ready climatic intelligence without relying on manual ground measurements.
+
+Objectives
+
+Quantify the spatiotemporal distribution, dual-diurnal thermal regimes, and intra-annual monotonic trends of trace gases using Sentinel-5P and MODIS data.
+
+Evaluate spatial non-stationarity between land surface temperatures and atmospheric pollutants using Principal Component Analysis (PCA) and Geographically Weighted Regression (GWR).
+
+Develop and validate a five-algorithm machine learning framework (SVR, Ridge, RF, GB, KNN) coupled with Shapley Additive Explanations (SHAP) to predict particulate matter and attribute exact physical feature importance.
+
+Study Area Justification
+
+Lubbock, Texas ($33.5779^\circ\text{ N}, 101.8552^\circ\text{ W}$) serves as an optimal natural laboratory. Positioned on the semi-arid Llano Estacado, it combines a dense urban core with extensive surrounding cotton agriculture and concentrated animal feeding operations. Crucially, it sits directly downwind of the Permian Basin, one of the world's highest-emitting petroleum extraction zones. This unique geographic placement creates a highly complex, multi-source emission profile governed by severe convective wind regimes and extreme thermal variances.
+
+Methodology and Execution
+
+The research executes entirely within a Google Earth Engine Python API framework:
+
+Data Acquisition: Cloud-native retrieval of Sentinel-5P (Trace Gases), MODIS (LST and AOD-derived PM), and ECMWF ERA5-Land (Meteorology).
+
+Temporal Trend Analysis: Utilizing the Mann-Kendall test and Sen's Slope to statistically verify monotonic pollution trajectories across the calendar year (Rahman et al., 2025).
+
+Spatial Analysis: Generating continuous grids of local $R^2$ using an adaptive Gaussian GWR kernel to measure how the influence of LST on trace gases changes geometrically (Sameh et al., 2026).
+
+Predictive Modeling: Extracting 1,500 spatial sample points to train Support Vector Regression, Ridge, Random Forest, Gradient Boosting, and KNN algorithms. The champion model undergoes TreeSHAP/KernelSHAP decomposition to isolate the marginal contribution of individual meteorological features (Alvarez et al., 2025).
+
+Expected Outcomes
+
+The research will yield a high-fidelity cartographic atlas containing over 20 publication-grade maps documenting monthly pollution evolution, SUHI intensity, and local regression surfaces. Additionally, the quantitative pipeline will produce structured statistical ledgers detailing PCA factor loadings, model validation metrics (RMSE, $R^2$), and SHAP attribution scores, providing local authorities with an empirical blueprint for targeted environmental interventions.
+
+
+
+Formal Research Proposal
+
+Checklist Brief Explanations
+
+Research Title Evaluating Spatiotemporal Multi-Pollutant Dynamics and Thermal Non-Stationarity across Semi-Arid Urban and Agro-Industrial Interfaces through Cloud-Native Geospatial Computations and Explainable Machine Learning
+
+Problem Statement and Research Questions
+
+Rapid industrial expansion, agricultural intensification, and fossil fuel extraction significantly alter land surface temperatures and degrade ambient air quality across semi-arid environments (Sameh et al., 2026; Chen et al., 2022). The High Plains of West Texas, specifically Lubbock (33.5779
+
+∘
+
+ N,101.8552
+
+∘
+
+ W), functions as a critical agro-industrial hub situated immediately downwind of the Permian Basin—the highest-producing petroleum region in the United States (Zhang et al., 2020). The region experiences severe atmospheric stress from episodic convective dust storms, agricultural particulate emissions, fugitive methane plumes, and surface urban heat islands (Lyles et al., 2021). Conventional air quality monitoring relies on sparse ground networks that fail to record the spatial gradients of primary criteria pollutants and secondary trace gases across the complex urban-agricultural boundary. Consequently, the mechanistic coupling between thermal anomalies and multi-pollutant accumulation remains poorly constrained.
+
+
+
+
+
+
+
+This investigation interrogates two primary research questions:
+
+
+
+
+
+1. How do synoptic meteorological parameters and surface urban heat islands dictate the spatiotemporal distribution and monotonic trends of tropospheric trace gases across a semi-arid agro-industrial interface?
+
+
+
+
+
+2. To what degree can a performance-weighted tree ensemble, coupled with Shapley Additive Explanations (SHAP), isolate the physical drivers of particulate matter accumulation without relying on spatially stationary assumptions?
+
+
+
+Literature Review related to my topic
+
+Satellite remote sensing and cloud-based platforms provide continuous spaceborne retrievals of trace gases and land surface characteristics (Veefkind et al., 2012; Gorelick et al., 2017). Recent studies evaluate distinct dimensions of atmospheric monitoring across varied geographic contexts. Sameh et al. (2026) assessed interactions between land surface temperature (LST) and air pollutants in Egypt, reporting strong positive correlations between thermal stress and methane (r=0.8589). Rahman et al. (2025) utilized a 60-month Sentinel-5P time-series over Dhaka, Bangladesh, applying non-parametric Mann-Kendall tests to detect monotonic seasonal variations in criteria pollutants.
+
+
+
+
+
+
+
+In the domain of predictive modeling, Haseeb et al. (2026) developed a performance-weighted machine learning framework (R
+
+2
+
+=0.77) combining satellite and reanalysis data for particulate forecasting in Lahore, Pakistan. Concurrently, Alvarez et al. (2025) integrated multi-sensor satellite embeddings with explainable artificial intelligence to map urban trace gases at high spatial resolutions in Quito, Ecuador. Furthermore, Geographically Weighted Regression (GWR) has been applied to capture the spatial non-stationarity of climatic relationships across diverse land covers, superseding global Ordinary Least Squares (OLS) models (Wang et al., 2021; Fotheringham et al., 2002).
+
+
+
+
+
+
+
+The Synthesized Synthesis: Despite methodological advances, critical vulnerabilities persist. Previous investigations examine trace gases in isolation, failing to evaluate the simultaneous spatial coupling between criteria pollutants (NO
+
+2
+
+​
+
+,SO
+
+2
+
+​
+
+,O
+
+3
+
+​
+
+), greenhouse gases (CH
+
+4
+
+​
+
+), and particulate proxies. Additionally, black-box machine learning algorithms forecast pollution accurately but lack physical interpretability, leaving policymakers without actionable emission-source attribution. This study exploits these limitations by executing an integrated geospatial pipeline combining Mann-Kendall temporal analytics with GWR and SHAP, bridging the gap between predictive accuracy and mechanistic climatic intelligence.
+
+
+
+Research Goal(s) and Objective(s)
+
+The core aim of this research is to establish a reproducible, cloud-based analytical architecture that quantifies multi-pollutant distributions, detects intra-annual monotonic trends, and isolates the spatial non-stationarity of air quality drivers in Lubbock, Texas.
+
+
+
+
+
+
+
+• Objective 1: To map the 12-month spatiotemporal distribution, dual-diurnal thermal regimes, and monotonic trend trajectories of atmospheric constituents (CH
+
+4
+
+​
+
+,NO
+
+2
+
+​
+
+,SO
+
+2
+
+​
+
+,O
+
+3
+
+​
+
+,PM
+
+2.5
+
+​
+
+) utilizing Sentinel-5P and MODIS datasets.
+
+
+
+
+
+• Objective 2: To evaluate the spatial non-stationarity and factor clustering between land surface temperature and trace gases through Principal Component Analysis (PCA) and continuous Geographically Weighted Regression (GWR) surfaces.
+
+
+
+
+
+• Objective 3: To deploy a performance-weighted machine learning ensemble integrated with Explainable AI (SHAP) to predict PM
+
+2.5
+
+​
+
+hotspots and attribute the exact hydro-meteorological and chemical drivers governing local air quality.
+
+
+
+Methodology and Method(s)
+
+1. Cloud-Based Data Processing:
+
+
+
+
+
+Atmospheric constituents (CH
+
+4
+
+​
+
+,NO
+
+2
+
+​
+
+,SO
+
+2
+
+​
+
+,HCHO,O
+
+3
+
+​
+
+,UVAI,CO) are retrieved from Sentinel-5P L3 Offline products with strict quality assurance filtering (QA>0.75) via the Google Earth Engine Python API (Rahman et al., 2025). Land Surface Temperature (LST
+
+Day
+
+​
+
+and LST
+
+Night
+
+​
+
+) is extracted from MODIS MOD11A1 (1 km resolution) to compute Surface Urban Heat Island (SUHI) departures (Wan et al., 2015; Sameh et al., 2026). Particulate matter (PM
+
+2.5
+
+​
+
+) is empirically modeled from MODIS MAIAC Aerosol Optical Depth (MCD19A2) (Kan et al., 2019). Synoptic meteorology is extracted from ECMWF ERA5-Land reanalysis (Muñoz-Sabater et al., 2021).
+
+
+
+
+
+
+
+2. Statistical & Spatial Analytical Engine:
+
+
+
+
+
+Non-parametric Mann-Kendall tests evaluate monthly monotonic trend significance (α=0.05) across the calendar year (Kendall, 1975). Variance Inflation Factor (VIF) identifies collinearity, followed by PCA eigenvalue-eigenvector decomposition to isolate dominant thermal and particulate components (Jolliffe, 2002). Geographically Weighted Regression (GWR) with an adaptive Gaussian kernel estimates spatially varying parameter surfaces and interpolates continuous local coefficient of determination (R
+
+2
+
+) maps (Fotheringham et al., 2002).
+
+
+
+
+
+
+
+3. Explainable GeoAI Modeling:
+
+
+
+
+
+A multi-regressor ensemble (Random Forest, Gradient Boosting, SVR, Ridge, KNN) predicts PM
+
+2.5
+
+​
+
+concentrations. TreeSHAP (Lundberg & Lee, 2017) deconstructs the champion model based on cooperative game theory, calculating the exact marginal contribution of each variable to identify whether local pollution spikes are driven by thermal anomalies, stagnant synoptic pressure, or primary combustion emissions (Alvarez et al., 2025; Haseeb et al., 2026).
+
+
+
+Expected Outcome
+
+• A high-fidelity cartographic atlas containing over 15 publication-grade spatial maps depicting the 12-month evolution of trace gases and thermal regimes.
+
+
+
+
+
+• Quantitative identification of intra-annual pollution trends via Kendall's Tau metrics, isolating specific seasonal transition anomalies.
+
+
+
+
+
+• Spatially continuous GWR surfaces demonstrating the geographic variation of local explanatory power (R
+
+2
+
+) between land surface temperature and air pollutants.
+
+
+
+
+
+• A validated, performance-weighted GeoAI framework producing SHAP diagnostic plots that explicitly rank the physical and chemical drivers of particulate variance.
+
+
+
+
+
+• Fully compiled structured ledgers capturing monthly aggregations, trend statistics, PCA matrices, and GWR parameter outputs for direct urban policy assessment.
+
+
+
+Potential Data Source(s)
+
+• Sentinel-5P TROPOMI: COPERNICUS/S5P/OFFL/L3_* (European Space Agency).
+
+
+
+
+
+• MODIS Terra/Aqua: MODIS/061/MOD11A1 (LST), MODIS/061/MCD19A2_GRANULES (MAIAC AOD) (NASA LP DAAC).
+
+
+
+
+
+• ECMWF ERA5-Land: ECMWF/ERA5_LAND/MONTHLY_AGGR and DAILY_AGGR (Meteorology).
+
+
+
+
+
+• US Census Bureau: TIGER/2018/Counties and TIGER/2010/Blocks (Administrative and structural boundaries).
+
+
+
+Proposed Work Programme / Draft Table of Contents
+
+Chapter 1: Introduction (Background, Problem Statement, Objectives, Study Area)
+
+
+
+
+
+Chapter 2: Literature Review (Satellite Air Quality Monitoring, Spatial Non-Stationarity, Explainable AI)
+
+
+
+
+
+Chapter 3: Methodology (Data Acquisition, Mann-Kendall Analysis, GWR Formulation, Ensemble SHAP Mechanics)
+
+
+
+
+
+Chapter 4: Spatiotemporal Results (Monthly Trace Gas Distributions, Thermal Regimes, Trend Trajectories)
+
+
+
+
+
+Chapter 5: GeoAI & GWR Findings (Multivariate Diagnostics, GWR Continuous Surfaces, SHAP Feature Attribution)
+
+
+
+
+
+Chapter 6: Discussion & Conclusion (Mechanistic Interpretations, Policy Implications, Limitations, Future Horizons)
+
+
+
+Time Schedule & Budget
+
+Phase 1 (Month 1): Data ingestion, cloud-based preprocessing, and daily/monthly temporal aggregation via GEE API.
+
+
+
+
+
+Phase 2 (Month 2): Execution of Mann-Kendall statistics, PCA, and continuous GWR spatial interpolation.
+
+
+
+
+
+Phase 3 (Month 3-4): Training machine learning ensembles, TreeSHAP diagnostic extraction, and multi-criteria hotspot mapping.
+
+
+
+
+
+Phase 4 (Month 5-6): Cartographic refinement, manuscript drafting, and submission.
+
+
+
+
+
+Estimated Budget: Primarily allocated for high-performance computing instances, API access overheads, and open-access Q1 journal publication fees (APC).
+
+
+
+References
+
+Alvarez, C. I., Ulloa Vaca, C. A., & Echeverria Llumipanta, N. A. (2025). Machine learning for urban air quality prediction using Google AlphaEarth Foundations satellite embeddings: A case study of Quito, Ecuador. Remote Sensing, 17(20), 3472. https://doi.org/10.3390/rs17203472
+
+
+
+Chen, H., Deng, G., & Liu, Y. (2022). Monitoring the influence of industrialization and urbanization on spatiotemporal variations of AQI and PM
+
+2.5
+
+​
+
+in three provinces, China. Atmosphere, 13(9), 1377. https://doi.org/10.3390/atmos13091377
+
+
+
+Fotheringham, A. S., Brunsdon, C., & Charlton, M. (2002). Geographically weighted regression: The analysis of spatially varying relationships. John Wiley & Sons.
+
+
+
+Gorelick, N., Hancher, M., Dixon, M., Ilyushchenko, S., Thau, D., & Moore, R. (2017). Google Earth Engine: Planetary-scale geospatial analysis for everyone. Remote Sensing of Environment, 202, 18–27. https://doi.org/10.1016/j.rse.2017.06.031
+
+
+
+Haseeb, M., Tahir, Z., Mehmood, S. A., Arif, H., Kousar, S., Ghafoor, S., & Mehmood, K. (2026). Ensemble artificial intelligence fusing satellite, reanalysis, and ground observations for improved PM
+
+2.5
+
+​
+
+prediction. Atmosphere, 17(4), 411. https://doi.org/10.3390/atmos17040411
+
+
+
+Jolliffe, I. T. (2002). Principal component analysis (2nd ed.). Springer. https://doi.org/10.1007/b98835
+
+
+
+Kan, X., Zhu, L., Zhang, Y., & Yuan, Y. (2019). Spatial-temporal variability of PM
+
+2.5
+
+​
+
+concentration in Xuzhou based on satellite remote sensing and meteorological data. International Journal of Sensor Networks, 29(3), 181–191. https://doi.org/10.1504/IJSNET.2019.098732
+
+
+
+Kendall, M. G. (1975). Rank correlation methods (4th ed.). Charles Griffin & Co.
+
+
+
+Lundberg, S. M., & Lee, S.-I. (2017). A unified approach to interpreting model predictions. Advances in Neural Information Processing Systems, 30, 4765–4774.
+
+
+
+Lyles, R. B., Zhang, Y., & Gill, T. E. (2021). Characterizing blowing dust events and aerosol optical depth properties over the Southern High Plains using satellite and ground observations. Atmospheric Environment, 254, 118398. https://doi.org/10.1016/j.atmosenv.2021.118398
+
+
+
+Muñoz-Sabater, J., Dutra, E., Agustí-Panareda, A., Albergel, C., Arduini, G., Balsamo, G., Boussetta, S., Choulga, M., Harrigan, S., Hersbach, H., Martens, B., Miralles, D. G., Piles, M., Rodríguez-Fernández, N. J., Zsoter, E., Buontempo, C., & Thépaut, J.-N. (2021). ERA5-Land: A state-of-the-art global reanalysis dataset for land applications. Earth System Science Data, 13(9), 4349–4383. https://doi.org/10.5194/essd-13-4349-2021
+
+
+
+Rahman, M. M., Kamruzzaman, M., Faridatul, M. I., & Szabó, G. (2025). Spatiotemporal dynamics of urban air pollution in Dhaka City (2020–2024) using time-series Sentinel-5P satellite images and Google Earth Engine (GEE). Environments, 12(8), 274. https://doi.org/10.3390/environments12080274
+
+
+
+Retalis, A., & Sifakis, N. (2010). Urban aerosol mapping over Athens using the differential textural analysis (DTA) algorithm on MERIS-ENVISAT data. ISPRS Journal of Photogrammetry and Remote Sensing, 65(1), 17–25. https://doi.org/10.1016/j.isprsjprs.2009.08.003
+
+
+
+Sameh, S., Zaki, A., Elsaka, B., Beshr, A. A. A., & Shehata, A. G. (2026). Air pollution mapping and monitoring using Sentinel-5P data and Google Earth Engine. The Egyptian Journal of Remote Sensing and Space Sciences, 29, 158–178. https://doi.org/10.1016/j.ejrs.2026.01.008
+
+
+
+Sen, P. K. (1968). Estimates of the regression coefficient based on Kendall's tau. Journal of the American Statistical Association, 63(324), 1379–1389. https://doi.org/10.1080/01621459.1968.10480934
+
+
+
+Veefkind, J. P., Aben, I., McMullan, K., Förster, H., de Vries, J., Otter, G., Claas, J., Eskes, H. J., de Haan, J. F., Kleipool, Q., van Weele, M., Hasekamp, O., Hoogeveen, R., Landgraf, J., Snel, R., Tol, P., Ingmann, P., Voors, R., Kruizinga, B., ... Zehner, C. (2012). TROPOMI on the ESA Sentinel-5 Precursor: A GMES mission for global observations of the atmospheric composition for climate, air quality and ozone layer applications. Remote Sensing of Environment, 120, 70–83. https://doi.org/10.1016/j.rse.2011.09.027
+
+
+
+Wan, Z., Hook, S., & Hulley, G. (2015). MOD11A1 MODIS/Terra land surface temperature/emissivity daily L3 global 1km SIN grid V006. NASA EOSDIS Land Processes DAAC. https://doi.org/10.5067/MODIS/MOD11A1.006
+
+
+
+Wang, Q., Feng, H., Feng, H., Yu, Y., Li, J., & Ning, E. (2021). The impacts of road traffic on urban air quality in Jinan based on GWR and remote sensing. Scientific Reports, 11(1), 15512. https://doi.org/10.1038/s41598-021-95006-z
+
+
+
+Zhang, Y., Gautam, R., Pandey, S., Omara, M., Maasakkers, J. D., Sadavarte, P., Lyon, D., Nesser, H., Sulprizio, M. P., Varon, D. J., Zhang, R., Houweling, S., Zavala-Araiza, D., Alvarez, R. A., Lorente, A., Hamburg, S. P., Aben, I., & Jacob, D. J. (2020). Quantifying methane emissions from the largest oil-producing basin in the United States from space. Science Advances, 6(17), eaaz5120. https://doi.org/10.1126/sciadv.aaz5120
